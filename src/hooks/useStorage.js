@@ -1,40 +1,34 @@
-import { useEffect, useState } from 'react';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storageApp } from '../config/firebase';
+import { useState } from 'react';
+import { firestoreApp, storageApp, timestamp } from '../config/firebase';
 
-const useStorage = (file) => {
+const useStorage = (data) => {
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState(null);
-  const [url, setUrl] = useState(null);
+  const [isCompleted, setIsCompleted] = useState(null);
 
-  useEffect(() => {
-    if (!file) return;
+  useState(() => {
+    const storageRef = storageApp.ref(data.itemImage.name);
+    const collectionRef = firestoreApp.collection('auctions');
 
-    const storageRef = ref(storageApp, `images/${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on(
+    storageRef.put(data.itemImage).on(
       'state_changed',
-      (snapshot) => {
-        const percentage = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+      (snap) => {
+        let percentage = (snap.bytesTransferred / snap.totalBytes) * 100;
         setProgress(percentage);
       },
-      (error) => {
-        setError(error);
+      (err) => {
+        console.log(err);
       },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadUrl) => {
-          setUrl(downloadUrl);
-        });
+      async () => {
+        const imgUrl = await storageRef.getDownloadURL();
+        const createdAt = timestamp();
+        delete data.itemImage;
+        await collectionRef.add({ ...data, createdAt, imgUrl });
+        setIsCompleted(true);
       }
     );
+  }, [data]);
 
-    return () => {
-      uploadTask.cancel();
-    };
-  }, [file]);
-
-  return { progress, url, error };
+  return { progress, isCompleted };
 };
 
 export default useStorage;

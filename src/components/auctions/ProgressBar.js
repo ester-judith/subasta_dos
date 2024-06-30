@@ -2,17 +2,14 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import useStorage from '../../hooks/useStorage';
 
-const ProgressBarComponent = ({ file, setAuction }) => {
-  const { progress, url } = useStorage(file);
+const ProgressBar = ({ auction, setAuction }) => {
+  const { progress, isCompleted } = useStorage(file);
 
   useEffect(() => {
-    if (url) {
-      setAuction((prevAuction) => ({
-        ...prevAuction,
-        itemImage: url,
-      }));
+    if (isCompleted) {
+      setAuction(null)
     }
-  }, [url, setAuction]);
+  }, [isCompleted, setAuction]);
 
   return (
     <motion.div
@@ -23,4 +20,4 @@ const ProgressBarComponent = ({ file, setAuction }) => {
   );
 };
 
-export default ProgressBarComponent;
+export default ProgressBar();

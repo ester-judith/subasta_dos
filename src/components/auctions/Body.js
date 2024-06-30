@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Alert } from 'react-bootstrap';
 import { AuthContext } from '../../context/AuthContext';
 import { AddAuction } from './AddAuction';
-import ProgressBarComponent from './ProgressBar';
+import ProgressBar from './ProgressBar';
 import { useFirestore } from '../../hooks/useFirestore';
 import { AuctionCard } from './AuctionCard';
 
@@ -14,7 +14,7 @@ export const AuctionBody = () => {
   return (
     <div className="py-5">
       <div className="container">
-        {auction && <ProgressBarComponent auction={auction} setAuction={setAuction} />}
+        {auction && <ProgressBar auction={auction} setAuction={setAuction} />}
 
         {globalMsg && <Alert variant="info">{globalMsg}</Alert>}
 

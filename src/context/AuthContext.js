@@ -5,13 +5,14 @@ import {
     signOut, 
     onAuthStateChanged 
 } from 'firebase/auth';
-import { authApp } from '../config/firebase';
+import { authApp, firestoreApp } from '../config/firebase';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({children}) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [globalMsg, setGlobalMsg] = useState('');
 
     const register = (email, password) => {
         return createUserWithEmailAndPassword(authApp, email, password);
@@ -25,6 +26,26 @@ export const AuthProvider = ({children}) => {
         return signOut(authApp);
     };
 
+    const bidAuction = (auctionId, price) => {
+        if (!currentUser) {
+            return setGlobalMsg('Por favor inicia sesion primero');
+        }
+
+        let newPrice = Math.floor((price / 100) * 110);
+        const db = firestoreApp.collection('auctions')
+
+        return db.doc(auctionId).update({
+            curPrice: newPrice,
+            curWinner: currentUser.email,
+        });
+    };
+
+    const endAuction = (auctionId) => {
+        const db = firestoreApp.collection('auctions');
+
+        return db.doc(auctionId).delete();
+    };
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(authApp, (user) => {
             setCurrentUser(user);
@@ -35,7 +56,7 @@ export const AuthProvider = ({children}) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{currentUser, register, login, logout}}>
+        <AuthContext.Provider value={{currentUser, register, login, logout, bidAuction, endAuction, globalMsg}}>
             {!loading && children}
         </AuthContext.Provider>
     );
