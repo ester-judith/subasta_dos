@@ -1,9 +1,9 @@
-// src/components/auctions/AuctionCard.js
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import Countdown from 'react-countdown';
 import { AuthContext } from '../../context/AuthContext';
 
-const renderer = ({ days, hours, minutes, seconds, completed, props }) => {
+
+const Renderer = ({ days, hours, minutes, seconds, completed, owner, item, bidAuction, endAuction, increaseBid, incrementAmount, handleIncrementChange }) => {
   if (completed) {
     return null;
   }
@@ -14,7 +14,7 @@ const renderer = ({ days, hours, minutes, seconds, completed, props }) => {
         <div
           style={{
             height: '320px',
-            backgroundImage: `url(${props.item.imgUrl})`,
+            backgroundImage: `url(${item.itemImage})`,
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
@@ -23,45 +23,66 @@ const renderer = ({ days, hours, minutes, seconds, completed, props }) => {
         />
         <div className="card-body">
           <p className="lead display-6">
-            {props.item.title}
+            {item.title}
           </p>
-          <div className="d-flex justify-content-between aling-item-center">
+          <div className="d-flex justify-content-between align-items-center">
             <h5>
-              {days * 24 + hours} hr: {minutes} min: {seconds} sec
+              {days > 0 ? `${days} día${days > 1 ? 's' : ''}, ` : ''}
+              {hours} hr: {minutes} min: {seconds} sec
             </h5>
           </div>
           <p className="card-text">
-            {props.item.desc}
+            {item.desc}
           </p>
-          <div className="d-flex justify-content-between align-item-center">
+          <div className="d-flex justify-content-between align-items-center">
             <div>
-              {!props.owner ? (
-                <div 
-                  onClick={() => props.bidAuction()} className="btn btn-outline-secondary"
+              {!owner ? (
+                <div
+                  onClick={() => bidAuction(item.id, item.curPrice)}
+                  className="btn btn-outline-secondary"
                 >
                   Oferta
                 </div>
-              ) : props.owner.email === props.item.email ? (
+              ) : owner.email === item.email ? (
                 <div
-                  onClick={() => props.endAuction(props.itme.id)}
+                  onClick={() => endAuction(item.id)}
                   className="btn btn-outline-secondary"
                 >
                   Cancelar subasta
                 </div>
-              ) : props.owner.email === props.item.curWinner ? (
-                <p className="display-6">Ganador</p>
-              ): (
-                <div
-                  onClick={() =>
-                    props.bidAuction(props.item.id, props.item.curPrice)
-                  }
-                  className="btn btn-outline-secondary"
-                >
-                  Oferta
+              ) : owner.email === item.curWinner ? (
+                <div className="d-flex align-items-center">
+                  <p className="display-6 mr-2">Ganador</p>
+                  
                 </div>
+              ) : (
+                <>
+                  <div
+                    onClick={() => bidAuction(item.id, item.curPrice)}
+                    className="btn btn-outline-secondary"
+                  >
+                    Oferta
+                  </div>
+                  <div className="input-group my-3">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={incrementAmount}
+                      onChange={handleIncrementChange}
+                      placeholder="Cantidad a incrementar"
+                    />
+                    <div
+                      onClick={() => increaseBid(item.id, incrementAmount)}
+                      className="btn btn-outline-secondary"
+                    >
+                      Incrementar oferta
+                    </div>
+                  </div>
+                  
+                </>
               )}
             </div>
-            <p className="display-6">${props.item.curPrice}</p>
+            <p className="display-6">${item.curPrice}</p>
           </div>
         </div>
       </div>
@@ -70,8 +91,14 @@ const renderer = ({ days, hours, minutes, seconds, completed, props }) => {
 };
 
 export const AuctionCard = ({ item }) => {
+  const [incrementAmount, setIncrementAmount] = useState(item.curPrice);
+  const { currentUser, bidAuction, endAuction, increaseBid } = useContext(AuthContext);
+
+  const handleIncrementChange = (e) => {
+    setIncrementAmount(parseInt(e.target.value));
+  };
+
   let expiredDate = item.duration;
-  const { currentUser, bidAuction, endAuction } = useContext(AuthContext);
 
   return (
     <Countdown
@@ -79,8 +106,11 @@ export const AuctionCard = ({ item }) => {
       date={expiredDate}
       bidAuction={bidAuction}
       endAuction={endAuction}
+      increaseBid={increaseBid}
       item={item}
-      renderer={renderer}
+      renderer={(props) => Renderer({ ...props, owner: currentUser, item, bidAuction, endAuction, increaseBid, incrementAmount, handleIncrementChange })}
     />
   );
 };
+
+export default AuctionCard;
